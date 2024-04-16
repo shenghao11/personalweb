@@ -1,0 +1,142 @@
+---
+title: "Random forests"
+format: html
+---
+
+
+```{r}
+diabetes <- read.csv("diabetes_binary_5050split_health_indicators_BRFSS2015.csv")
+head(diabetes,10)
+hist(diabetes$Diabetes_binary)
+diabetes$Diabetes_binary <- as.factor(diabetes$Diabetes_binary)
+diabetes$HighBP <- as.factor(diabetes$HighBP)
+diabetes$HighChol <- as.factor(diabetes$HighChol)
+diabetes$CholCheck <- as.factor(diabetes$CholCheck)
+diabetes$Smoker <- as.factor(diabetes$Smoker)
+diabetes$Stroke <- as.factor(diabetes$Stroke)
+diabetes$HeartDiseaseorAttack <- as.factor(diabetes$HeartDiseaseorAttack)
+diabetes$PhysActivity <- as.factor(diabetes$PhysActivity)
+diabetes$Fruits <- as.factor(diabetes$Fruits)
+diabetes$Veggies <- as.factor(diabetes$Veggies)
+diabetes$HvyAlcoholConsump <- as.factor(diabetes$HvyAlcoholConsump)
+diabetes$AnyHealthcare <- as.factor(diabetes$AnyHealthcare)
+diabetes$NoDocbcCost <- as.factor(diabetes$NoDocbcCost)
+diabetes$DiffWalk <- as.factor(diabetes$DiffWalk)
+diabetes$Sex <- as.factor(diabetes$Sex)
+
+```
+
+
+
+```{r}
+#Initial tree
+
+tree.Diabetes_binary=tree::tree(Diabetes_binary~.,data=diabetes)
+
+summary(tree.Diabetes_binary)
+plot(tree.Diabetes_binary)
+text(tree.Diabetes_binary,pretty=0) #annotate
+```
+
+
+```{r}
+library(caret)
+
+# assume that mydata is the data frame you want to split
+set.seed(123)  # for reproducibility
+train_indices <- createDataPartition(diabetes$Diabetes_binary, p = 0.8, list = FALSE)
+train_data <- diabetes[train_indices, ]
+test_data <- diabetes[-train_indices, ]
+
+
+
+```
+
+```{r}
+library(rpart)
+library(tree)
+library(rattle)
+library(visNetwork)
+tree.Diabetes_binary <- tree(Diabetes_binary~.,data=train_data)
+summary(tree.Diabetes_binary)
+tree.Diabetes_binary2 <- rpart(Diabetes_binary~.,data=train_data)
+fancyRpartPlot(tree.Diabetes_binary2)
+visTree(tree.Diabetes_binary2)
+
+```
+```{r}
+
+library(tidyverse)
+
+yhat <- predict(tree.Diabetes_binary,newdata=test_data)
+yhat <- as.factor(if_else(yhat[,1] >=0.5, 0, 1))
+cm <- confusionMatrix(yhat, test_data$Diabetes_binary)
+
+yhat2 <- predict(tree.Diabetes_binary2,newdata=test_data)
+yhat2 <- as.factor(if_else(yhat2[,1] >=0.5, 0, 1))
+cm2 <- confusionMatrix(yhat2, test_data$Diabetes_binary)
+
+
+```
+```{r}
+# Print the confusion matrices
+print(cm)
+print(cm2)
+
+```
+
+
+
+Use one of the tree aggregation methods we have learned about 
+
+
+Random Forest
+```{r}
+
+library(randomForest)
+set.seed(1)
+rf.Diabetes_binary <- randomForest(Diabetes_binary~.,data=train_data,mtry=4,importance=TRUE)
+rf.Diabetes_binary
+yhat.rf = predict(rf.Diabetes_binary,newdata=test_data)
+```
+```{r}
+tree <- getTree(rf.Diabetes_binary, k=1, labelVar=TRUE)
+plot(tree)
+
+```
+```{r}
+
+cm.rf <- confusionMatrix(yhat.rf, test_data$Diabetes_binary)
+cm.rf
+importance(rf.Diabetes_binary)
+varImpPlot(rf.Diabetes_binary)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
